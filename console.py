@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-""" Console Module """
 import cmd
 import sys
 from models.base_model import BaseModel
@@ -11,24 +9,23 @@ from models.city import City
 from models.amenity import Amenity
 from models.review import Review
 
-
 class HBNBCommand(cmd.Cmd):
-    """ Contains the functionality for the HBNB console"""
+    """Contains the functionality for the HBNB console"""
 
     # determines prompt for interactive/non-interactive modes
     prompt = '(hbnb) ' if sys.__stdin__.isatty() else ''
 
     classes = {
-               'BaseModel': BaseModel, 'User': User, 'Place': Place,
-               'State': State, 'City': City, 'Amenity': Amenity,
-               'Review': Review
-              }
+        'BaseModel': BaseModel, 'User': User, 'Place': Place,
+        'State': State, 'City': City, 'Amenity': Amenity,
+        'Review': Review
+    }
     dot_cmds = ['all', 'count', 'show', 'destroy', 'update']
     types = {
-             'number_rooms': int, 'number_bathrooms': int,
-             'max_guest': int, 'price_by_night': int,
-             'latitude': float, 'longitude': float
-            }
+        'number_rooms': int, 'number_bathrooms': int,
+        'max_guest': int, 'price_by_night': int,
+        'latitude': float, 'longitude': float
+    }
 
     def preloop(self):
         """Prints if isatty is false"""
@@ -36,11 +33,7 @@ class HBNBCommand(cmd.Cmd):
             print('(hbnb)')
 
     def precmd(self, line):
-        """Reformat command line for advanced command syntax.
-
-        Usage: <class name>.<command>([<id> [<*args> or <**kwargs>]])
-        (Brackets denote optional fields in usage example.)
-        """
+        """Reformat command line for advanced command syntax."""
         _cmd = _cls = _id = _args = ''  # initialize line elements
 
         # scan for general formating - i.e '.', '(', ')'
@@ -58,7 +51,7 @@ class HBNBCommand(cmd.Cmd):
             if _cmd not in HBNBCommand.dot_cmds:
                 raise Exception
 
-            # if parantheses contain arguments, parse them
+            # if parentheses contain arguments, parse them
             pline = pline[pline.find('(') + 1:pline.find(')')]
             if pline:
                 # partition args: (<id>, [<delim>], [<*args>])
@@ -73,7 +66,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] is '{' and pline[-1] is'}' \
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -91,6 +84,53 @@ class HBNBCommand(cmd.Cmd):
         if not sys.__stdin__.isatty():
             print('(hbnb) ', end='')
         return stop
+
+    def do_create(self, args):
+        """Create an object of any class with given parameters."""
+        if not args:
+            print("** class name missing **")
+            return
+
+        args_list = args.split()
+        class_name = args_list[0]
+
+        if class_name not in HBNBCommand.classes:
+            print("** class doesn't exist **")
+            return
+
+        args_list = args_list[1:]
+        params = {}
+
+        for arg in args_list:
+            key, value = self.parse_parameter(arg)
+            if key is not None:
+                params[key] = value
+
+        # Create an instance of the class with the processed parameters
+        new_instance = HBNBCommand.classes[class_name](**params)
+        storage.save()
+        print(new_instance.id)
+        storage.save()
+
+    def parse_parameter(self, param):
+        """Parse a parameter in the format key=value."""
+        parts = param.split('=')
+        if len(parts) == 2:
+            key, value = parts
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1].replace('_', ' ').replace('\\"', '"')
+            elif '.' in value:
+                try:
+                    value = float(value)
+                except ValueError:
+                    return None, None
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    return None, None
+            return key, value
+        return None, None
 
     def do_quit(self, command):
         """ Method to exit the HBNB console"""
@@ -112,24 +152,6 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ Overrides the emptyline method of CMD """
         pass
-
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
-            print("** class name missing **")
-            return
-        elif args not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
-
-    def help_create(self):
-        """ Help information for the create method """
-        print("Creates a class of any type")
-        print("[Usage]: create <className>\n")
 
     def do_show(self, args):
         """ Method to show an individual object """
