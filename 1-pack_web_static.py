@@ -20,3 +20,4 @@ def do_pack():
     if create is not None:
         return archive
     else:
+        return None
